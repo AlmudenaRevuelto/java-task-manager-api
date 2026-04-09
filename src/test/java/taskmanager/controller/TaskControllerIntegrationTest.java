@@ -4,6 +4,8 @@ package taskmanager.controller;
 import tools.jackson.databind.ObjectMapper;
 import taskmanager.dto.TaskRequest;
 import taskmanager.model.Priority;
+import taskmanager.repository.TaskRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -35,6 +37,14 @@ class TaskControllerIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private TaskRepository taskRepository;
+
+    @BeforeEach
+    void cleanUp() {
+        taskRepository.deleteAll();
+    }
 
     /** Verifies that POST /tasks creates a task and returns 201 with all fields. */
     @Test
@@ -143,5 +153,133 @@ class TaskControllerIntegrationTest {
         // Verificar que ya no existe
         mockMvc.perform(get("/tasks/" + id))
                 .andExpect(status().isNotFound());
+    }
+
+    /** Verifies that GET /tasks?completed=true returns only completed tasks. */
+    @Test
+    void shouldFilterTasksByCompleted() throws Exception {
+        TaskRequest done = new TaskRequest();
+        done.setTitle("Completed Task");
+        done.setCompleted(true);
+
+        TaskRequest pending = new TaskRequest();
+        pending.setTitle("Pending Task");
+        pending.setCompleted(false);
+
+        mockMvc.perform(post("/tasks").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(done)));
+        mockMvc.perform(post("/tasks").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(pending)));
+
+        mockMvc.perform(get("/tasks").param("completed", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].completed").value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is(true))));
+    }
+
+    /** Verifies that GET /tasks?priority=HIGH returns only HIGH priority tasks. */
+    @Test
+    void shouldFilterTasksByPriority() throws Exception {
+        TaskRequest high = new TaskRequest();
+        high.setTitle("High Priority Task");
+        high.setCompleted(false);
+        high.setPriority(Priority.HIGH);
+
+        TaskRequest low = new TaskRequest();
+        low.setTitle("Low Priority Task");
+        low.setCompleted(false);
+        low.setPriority(Priority.LOW);
+
+        mockMvc.perform(post("/tasks").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(high)));
+        mockMvc.perform(post("/tasks").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(low)));
+
+        mockMvc.perform(get("/tasks").param("priority", "HIGH"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].priority").value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is("HIGH"))));
+    }
+
+    /** Verifies that GET /tasks?size=2 returns at most 2 tasks per page. */
+    @Test
+    void shouldPaginateTasks() throws Exception {
+        for (int i = 1; i <= 3; i++) {
+            TaskRequest req = new TaskRequest();
+            req.setTitle("Paginated Task " + i);
+            req.setCompleted(false);
+            mockMvc.perform(post("/tasks").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(req)));
+        }
+
+        mockMvc.perform(get("/tasks").param("size", "2").param("page", "0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(org.hamcrest.Matchers.lessThanOrEqualTo(2)))
+                .andExpect(jsonPath("$.pageable.pageSize").value(2));
+    }
+
+    /** Verifies that GET /tasks?sort=dueDate,asc returns tasks ordered by dueDate ascending. */
+    @Test
+    void shouldSortTasksByDueDate() throws Exception {
+        TaskRequest first = new TaskRequest();
+        first.setTitle("Earlier Task");
+        first.setCompleted(false);
+        first.setDueDate(LocalDate.of(2026, 1, 1));
+
+        TaskRequest second = new TaskRequest();
+        second.setTitle("Later Task");
+        second.setCompleted(false);
+        second.setDueDate(LocalDate.of(2026, 12, 31));
+
+        mockMvc.perform(post("/tasks").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(first)));
+        mockMvc.perform(post("/tasks").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(second)));
+
+        String body = mockMvc.perform(get("/tasks").param("sort", "dueDate,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sort.sorted").value(true))
+                .andReturn().getResponse().getContentAsString();
+
+        tools.jackson.databind.JsonNode content = objectMapper.readTree(body).get("content");
+        for (int i = 0; i < content.size() - 1; i++) {
+            String current = content.get(i).get("dueDate").asText();
+            String next = content.get(i + 1).get("dueDate").asText();
+            if (!current.equals("null") && !next.equals("null")) {
+                org.junit.jupiter.api.Assertions.assertTrue(current.compareTo(next) <= 0,
+                        "Expected dueDate[" + i + "] <= dueDate[" + (i + 1) + "] but got " + current + " > " + next);
+            }
+        }
+    }
+
+    /** Verifies that GET /tasks?search=... returns only tasks matching title or description. */
+    @Test
+    void shouldSearchTasksByTitleOrDescription() throws Exception {
+        TaskRequest matching = new TaskRequest();
+        matching.setTitle("Spring Boot Guide");
+        matching.setDescription("A comprehensive guide to Spring Boot");
+        matching.setCompleted(false);
+
+        TaskRequest notMatching = new TaskRequest();
+        notMatching.setTitle("Grocery list");
+        notMatching.setDescription("Buy milk and eggs");
+        notMatching.setCompleted(false);
+
+        mockMvc.perform(post("/tasks").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(matching)));
+        mockMvc.perform(post("/tasks").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(notMatching)));
+
+        mockMvc.perform(get("/tasks").param("search", "spring"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Spring Boot Guide"));
+
+        mockMvc.perform(get("/tasks").param("search", "comprehensive"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].description").value("A comprehensive guide to Spring Boot"));
+
+        mockMvc.perform(get("/tasks").param("search", "nonexistent"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(0));
     }
 }

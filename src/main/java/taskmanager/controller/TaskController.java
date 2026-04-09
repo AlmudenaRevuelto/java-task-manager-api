@@ -1,17 +1,23 @@
 package taskmanager.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+
+import java.time.LocalDate;
 
 import taskmanager.dto.TaskRequest;
 import taskmanager.dto.TaskResponse;
+import taskmanager.model.Priority;
 import taskmanager.service.TaskService;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.format.annotation.DateTimeFormat;
 
 /**
  * REST controller that exposes CRUD endpoints for managing tasks.
@@ -29,15 +35,28 @@ public class TaskController {
     }
 
     /**
-     * Returns a list of all tasks.
+     * Returns a paginated, filtered and optionally sorted list of tasks.
      *
-     * @return list of {@link TaskResponse}
+     * @param completed optional filter by completion status
+     * @param priority  optional filter by priority level
+     * @param dueBefore optional filter for tasks due on or before this date
+     * @param search    optional free-text search over title and description
+     * @param pageable  pagination and sorting parameters
+     * @return paginated list of {@link TaskResponse}
      */
     @GetMapping
-    @Operation(summary = "List all tasks", description = "Returns all tasks sorted by creation order.")
+    @Operation(
+        summary = "List tasks",
+        description = "Returns a paginated list of tasks. Supports filtering by completion status, priority, due date, and free-text search over title and description."
+    )
     @ApiResponse(responseCode = "200", description = "Tasks retrieved successfully")
-    public List<TaskResponse> getAll() {
-        return service.getAll();
+    public Page<TaskResponse> getAll(
+            @Parameter(description = "Filter by completion status") @RequestParam(required = false) Boolean completed,
+            @Parameter(description = "Filter by priority level (LOW, MEDIUM, HIGH)") @RequestParam(required = false) Priority priority,
+            @Parameter(description = "Return tasks due on or before this date (ISO format: yyyy-MM-dd)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueBefore,
+            @Parameter(description = "Free-text search over title and description (case-insensitive)") @RequestParam(required = false) String search,
+            Pageable pageable) {
+        return service.getAll(completed, priority, dueBefore, search, pageable);
     }
 
     /**

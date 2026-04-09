@@ -1,12 +1,20 @@
 package taskmanager.service;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDate;
 
 import taskmanager.model.Task;
 import taskmanager.repository.TaskRepository;
+import taskmanager.specification.TaskSpecification;
 import taskmanager.dto.TaskRequest;
 import taskmanager.dto.TaskResponse;
+
+import taskmanager.exception.TaskNotFoundException;
+import taskmanager.model.Priority;
 
 /**
  * Service layer containing the business logic for task management.
@@ -40,15 +48,30 @@ public class TaskService {
     }
 
     /**
-     * Returns all tasks.
+     * Returns paginated and filtered tasks.
      *
-     * @return list of all tasks as {@link TaskResponse}
+     * @param completed optional completed filter
+     * @param priority optional priority filter
+     * @param dueBefore optional due date filter
+     * @param search optional free-text search over title and description
+     * @param pageable pagination/sorting info
+     * @return paginated task responses
      */
-    public List<TaskResponse> getAll() {
-        return repository.findAll()
-            .stream()
-            .map(this::toResponse)
-            .toList();
+    public Page<TaskResponse> getAll(
+            Boolean completed,
+            Priority priority,
+            LocalDate dueBefore,
+            String search,
+            Pageable pageable) {
+
+        Specification<Task> spec = Specification
+                .where(TaskSpecification.hasCompleted(completed))
+                .and(TaskSpecification.hasPriority(priority))
+                .and(TaskSpecification.dueBefore(dueBefore))
+                .and(TaskSpecification.containsText(search));
+
+        return repository.findAll(spec, pageable)
+                .map(this::toResponse);
     }
 
     /**
@@ -76,7 +99,7 @@ public class TaskService {
      */
     public TaskResponse update(Long id, TaskRequest request) {
         Task existing = repository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Task not found: " + id));
+            .orElseThrow(() -> new TaskNotFoundException(id));
 
         existing.setTitle(request.getTitle());
         existing.setDescription(request.getDescription());
@@ -97,7 +120,7 @@ public class TaskService {
      */
     public TaskResponse getById(Long id) {
         Task task = repository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Task not found: " + id));
+            .orElseThrow(() -> new TaskNotFoundException(id));
         return toResponse(task);
     }
 
@@ -107,6 +130,9 @@ public class TaskService {
      * @param id the task ID
      */
     public void delete(Long id) {
-        repository.deleteById(id);
+        Task task = repository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException(id));
+
+        repository.delete(task);
     }
 }

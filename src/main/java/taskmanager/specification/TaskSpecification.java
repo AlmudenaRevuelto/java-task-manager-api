@@ -68,6 +68,17 @@ public class TaskSpecification {
             );
         };
     }
+
+    /**
+     * Filters tasks that belong to the given user.
+     *
+     * @param username the username to match against
+     * @return a {@link Specification} that restricts results to tasks owned by {@code username}
+     */
+    public static Specification<Task> belongsToUser(String username) {
+        return (root, query, cb) ->
+                cb.equal(root.get("user").get("username"), username);
+    }
 }
 
 

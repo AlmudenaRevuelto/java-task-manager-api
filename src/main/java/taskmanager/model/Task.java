@@ -27,6 +27,11 @@ public class Task {
 
     private LocalDateTime updatedAt;
 
+    /** Owner of this task. Nullable to allow tasks without an assigned user. */
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = true)
+    private User user;
+
     public Task() {}
 
     /** Sets createdAt, updatedAt and default priority before the first persist. */
@@ -70,4 +75,9 @@ public class Task {
 
     public java.time.LocalDateTime getCreatedAt() { return createdAt; }
     public java.time.LocalDateTime getUpdatedAt() { return updatedAt; }
+
+    /** Returns the user who owns this task. */
+    public User getUser() { return user; }
+    /** Sets the user who owns this task. */
+    public void setUser(User user) { this.user = user; }
 }

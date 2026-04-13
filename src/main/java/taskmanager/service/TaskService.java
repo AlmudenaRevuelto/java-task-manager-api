@@ -9,12 +9,16 @@ import java.time.LocalDate;
 
 import taskmanager.model.Task;
 import taskmanager.repository.TaskRepository;
+import taskmanager.repository.UserRepository;
 import taskmanager.specification.TaskSpecification;
 import taskmanager.dto.TaskRequest;
 import taskmanager.dto.TaskResponse;
 
 import taskmanager.exception.TaskNotFoundException;
 import taskmanager.model.Priority;
+
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 
 /**
  * Service layer containing the business logic for task management.
@@ -23,9 +27,11 @@ import taskmanager.model.Priority;
 public class TaskService {
 
     private final TaskRepository repository;
+    private final UserRepository userRepository;
 
-    public TaskService(TaskRepository repository) {
+    public TaskService(TaskRepository repository, UserRepository userRepository) {
         this.repository = repository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -64,8 +70,11 @@ public class TaskService {
             String search,
             Pageable pageable) {
 
+        String username = getCurrentUsername();
+
         Specification<Task> spec = Specification
-                .where(TaskSpecification.hasCompleted(completed))
+                .where(TaskSpecification.belongsToUser(username))
+                .and(TaskSpecification.hasCompleted(completed))
                 .and(TaskSpecification.hasPriority(priority))
                 .and(TaskSpecification.dueBefore(dueBefore))
                 .and(TaskSpecification.containsText(search));
@@ -85,6 +94,9 @@ public class TaskService {
         task.setDescription(request.getDescription());
         task.setPriority(request.getPriority());
         task.setDueDate(request.getDueDate());
+        String username = getCurrentUsername();
+        task.setUser(userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username)));
         Task saved = repository.save(task);
         return toResponse(saved);
     }
@@ -95,10 +107,12 @@ public class TaskService {
      * @param id      the ID of the task to update
      * @param request the new task data
      * @return the updated task as {@link TaskResponse}
-     * @throws RuntimeException if no task is found with the given ID
+     * @throws RuntimeException if no task is found with the given ID or access is denied
      */
     public TaskResponse update(Long id, TaskRequest request) {
-        Task existing = repository.findById(id)
+        String username = getCurrentUsername();
+
+        Task existing = repository.findByIdAndUserUsername(id, username)
             .orElseThrow(() -> new TaskNotFoundException(id));
 
         existing.setTitle(request.getTitle());
@@ -119,8 +133,11 @@ public class TaskService {
      * @throws RuntimeException if no task is found with the given ID
      */
     public TaskResponse getById(Long id) {
-        Task task = repository.findById(id)
+        String username = getCurrentUsername();
+
+        Task task = repository.findByIdAndUserUsername(id, username)
             .orElseThrow(() -> new TaskNotFoundException(id));
+
         return toResponse(task);
     }
 
@@ -130,9 +147,26 @@ public class TaskService {
      * @param id the task ID
      */
     public void delete(Long id) {
-        Task task = repository.findById(id)
+        String username = getCurrentUsername();
+
+        Task task = repository.findByIdAndUserUsername(id, username)
                 .orElseThrow(() -> new TaskNotFoundException(id));
 
         repository.delete(task);
+    }
+
+    /**
+     * Resolves the username of the currently authenticated user from the {@link SecurityContextHolder}.
+     *
+     * @return the username of the authenticated principal
+     */
+    private String getCurrentUsername() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof UserDetails userDetails) {
+            return userDetails.getUsername();
+        }
+
+        return principal.toString();
     }
 }

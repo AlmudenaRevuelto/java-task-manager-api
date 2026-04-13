@@ -16,7 +16,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 
 /**
@@ -26,6 +28,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 @RestController
 @RequestMapping("/tasks")
 @Tag(name = "Tasks", description = "CRUD operations for task management")
+@SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = "basicAuth")
 public class TaskController {
 
     private final TaskService service;
@@ -55,7 +59,7 @@ public class TaskController {
             @Parameter(description = "Filter by priority level (LOW, MEDIUM, HIGH)") @RequestParam(required = false) Priority priority,
             @Parameter(description = "Return tasks due on or before this date (ISO format: yyyy-MM-dd)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueBefore,
             @Parameter(description = "Free-text search over title and description (case-insensitive)") @RequestParam(required = false) String search,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return service.getAll(completed, priority, dueBefore, search, pageable);
     }
 

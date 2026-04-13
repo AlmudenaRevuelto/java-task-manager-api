@@ -3,7 +3,6 @@ package taskmanager.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,6 +52,14 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ex.getMessage(), null));
     }
 
+    /**
+     * Handles {@link AccessDeniedException} thrown when a user tries to access
+     * a resource that belongs to another user.
+     * Returns HTTP 403 with the exception message.
+     *
+     * @param ex the access denied exception
+     * @return a {@code 403 Forbidden} response with the error message
+     */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)

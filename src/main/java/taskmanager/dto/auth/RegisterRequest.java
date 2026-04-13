@@ -2,12 +2,15 @@ package taskmanager.dto.auth;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import taskmanager.model.Role;
 
 /**
  * Request payload for the user registration endpoint.
  *
  * <p>The username must be unique. The password will be encoded with BCrypt
  * before being persisted — never stored in plain text.
+ *
+ * <p>{@code role} is optional; defaults to {@link Role#USER} if omitted.
  */
 @Schema(description = "Data required to register a new user")
 public class RegisterRequest {
@@ -19,6 +22,18 @@ public class RegisterRequest {
     @NotBlank(message = "Password is required")
     @Schema(description = "Plain-text password. Will be BCrypt-encoded before storage.", example = "secret123", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
+
+    /**
+     * Optional role to assign to the new user.
+     * Defaults to {@link Role#USER} when not provided.
+     */
+    @Schema(
+        description = "Role to assign to the new user. Defaults to USER if omitted.",
+        example = "USER",
+        allowableValues = {"USER", "ADMIN"},
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED
+    )
+    private Role role;
 
     /**
      * Returns the username.
@@ -54,5 +69,24 @@ public class RegisterRequest {
      */
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    /**
+     * Returns the role to assign to the new user, or {@code null} if not specified
+     * (in which case the controller defaults to {@link Role#USER}).
+     *
+     * @return the requested {@link Role}, or {@code null}
+     */
+    public Role getRole() {
+        return role;
+    }
+
+    /**
+     * Sets the role for the new user.
+     *
+     * @param role the desired {@link Role}
+     */
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

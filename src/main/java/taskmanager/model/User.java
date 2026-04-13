@@ -1,6 +1,7 @@
 package taskmanager.model;
 
 import jakarta.persistence.*;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * JPA entity representing an application user.
@@ -26,6 +27,11 @@ public class User {
     /** Encoded password. Cannot be null. */
     @Column(nullable = false)
     private String password;
+
+    /** Role of the user; determines access level within the application. */
+    @Schema(description = "Role assigned to the user", example = "USER", allowableValues = {"USER", "ADMIN"})
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     /** Required by JPA. */
     public User() {}
@@ -84,5 +90,23 @@ public class User {
      */
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    /**
+     * Returns the role assigned to this user.
+     *
+     * @return the user's {@link Role}
+     */
+    public Role getRole() {
+        return role;
+    }
+
+    /**
+     * Sets the role for this user.
+     *
+     * @param role the {@link Role} to assign
+     */
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

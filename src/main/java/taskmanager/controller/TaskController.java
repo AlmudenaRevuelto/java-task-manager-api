@@ -3,6 +3,7 @@ package taskmanager.controller;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -49,6 +50,7 @@ public class TaskController {
      * @return paginated list of {@link TaskResponse}
      */
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(
         summary = "List tasks",
         description = "Returns a paginated list of tasks. Supports filtering by completion status, priority, due date, and free-text search over title and description."
@@ -70,6 +72,7 @@ public class TaskController {
      * @return the matching {@link TaskResponse}
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(summary = "Get a task by ID", description = "Returns a single task matching the provided ID.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Task found"),
@@ -87,6 +90,7 @@ public class TaskController {
      */
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(summary = "Create a new task", description = "Creates a new task. Title is required. Priority defaults to MEDIUM if not provided.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Task created successfully"),
@@ -104,6 +108,7 @@ public class TaskController {
      * @return the updated {@link TaskResponse}
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(summary = "Update an existing task by ID", description = "Replaces all fields of an existing task. Title is required.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Task updated successfully"),
@@ -121,6 +126,7 @@ public class TaskController {
      */
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(summary = "Delete a task by ID", description = "Permanently removes the task with the given ID.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Task deleted successfully"),

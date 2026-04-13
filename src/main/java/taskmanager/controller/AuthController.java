@@ -21,6 +21,7 @@ import taskmanager.dto.auth.JwtAuthResponse;
 import taskmanager.dto.auth.RegisterRequest;
 import taskmanager.dto.auth.LoginRequest;
 import taskmanager.model.User;
+import taskmanager.model.Role;
 import taskmanager.repository.UserRepository;
 import taskmanager.security.JwtUtils;
 
@@ -52,13 +53,16 @@ public class AuthController {
     /**
      * Registers a new user with a BCrypt-encoded password and returns a JWT token.
      *
-     * @param request the registration payload containing username and password
+     * <p>The {@code role} field in the request is optional; if omitted, the user
+     * is assigned {@link Role#USER} by default.
+     *
+     * @param request the registration payload containing username, password, and optional role
      * @return 201 with a {@link JwtAuthResponse} containing the token, or 400 if the username is already taken
      */
     @PostMapping("/register")
     @Operation(
         summary = "Register a new user",
-        description = "Creates a new user account. The password is stored BCrypt-encoded. Returns a JWT token on success. Returns 400 if the username already exists."
+        description = "Creates a new user account. The role field is optional and defaults to USER. The password is stored BCrypt-encoded. Returns a JWT token on success. Returns 400 if the username already exists."
     )
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "User registered successfully",
@@ -72,16 +76,17 @@ public class AuthController {
                     .body("Username already exists");
         }
 
-        // Encode password with BCrypt
         User user = new User(
                 request.getUsername(),
                 passwordEncoder.encode(request.getPassword())
         );
+        // Use the requested role, defaulting to USER when none is specified
+        user.setRole(request.getRole() != null ? request.getRole() : Role.USER);
 
         userRepository.save(user);
 
         String token = jwtUtils.generateJwtToken(user.getUsername());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new JwtAuthResponse(token, user.getUsername()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new JwtAuthResponse(token, user.getUsername(), user.getRole()));
     }
 
     /**
@@ -90,7 +95,7 @@ public class AuthController {
      * <p>Returns 401 automatically if the credentials are invalid (handled by Spring Security).
      *
      * @param request the login payload containing username and password
-     * @return 200 with a {@link JwtAuthResponse} containing the signed token
+     * @return 200 with a {@link JwtAuthResponse} containing the signed token and the user's role
      */
     @PostMapping("/login")
     @Operation(
@@ -107,6 +112,9 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
         String token = jwtUtils.generateJwtToken(auth.getName());
-        return ResponseEntity.ok(new JwtAuthResponse(token, auth.getName()));
+        Role role = userRepository.findByUsername(auth.getName())
+                .map(User::getRole)
+                .orElse(Role.USER);
+        return ResponseEntity.ok(new JwtAuthResponse(token, auth.getName(), role));
     }
 }

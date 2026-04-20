@@ -10,9 +10,11 @@
  */
 import axios from "axios";
 
-// Shared Axios instance with the backend base URL
+// Shared Axios instance — no baseURL so requests use the current origin.
+// In development Vite proxies /auth and /tasks to localhost:8080.
+// In Docker, nginx does the same proxying to the backend container.
 const api = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: "",
 });
 
 // Attach the JWT token to every request if one exists in localStorage

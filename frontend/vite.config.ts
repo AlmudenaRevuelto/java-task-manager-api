@@ -1,15 +1,25 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+
+  server: {
+    // In development, proxy API calls to the local Spring Boot backend so
+    // axios can use relative URLs (same as in the Docker/nginx setup).
+    proxy: {
+      '/auth':  'http://localhost:8080',
+      '/tasks': 'http://localhost:8080',
+    },
+  },
+
   test: {
-    // Simula un DOM real en cada test (como si fuera el navegador)
+    // Use a real DOM environment for every test (browser-like behaviour)
     environment: 'jsdom',
-    // Permite usar describe/it/expect sin importarlos explícitamente
+    // Allow describe/it/expect without explicit imports
     globals: true,
-    // Carga matchers extra de jest-dom antes de cada test
+    // Load extra jest-dom matchers before each test file
     setupFiles: './src/setupTests.ts',
   },
 })

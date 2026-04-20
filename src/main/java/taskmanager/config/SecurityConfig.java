@@ -1,5 +1,6 @@
 package taskmanager.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -20,14 +21,9 @@ import taskmanager.security.JwtAuthFilter;
 /**
  * Spring Security configuration for the Task Manager API.
  *
- * <p>Supports two authentication mechanisms:
- * <ul>
- *   <li><b>JWT Bearer</b> — token obtained from {@code POST /auth/login} or
- *       {@code POST /auth/register}. Validated by {@link JwtAuthFilter} on every
- *       request before Spring's standard filter chain.</li>
- *   <li><b>HTTP Basic</b> — username and password sent on every request (kept for
- *       Swagger UI convenience).</li>
- * </ul>
+ * <p>Authentication is handled exclusively via JWT Bearer tokens obtained from
+ * {@code POST /auth/login}. HTTP Basic is intentionally disabled to prevent the
+ * browser from showing its native credential dialog on 401 responses.
  *
  * <p>Public endpoints: {@code /auth/register}, {@code /auth/login}, Swagger UI
  * and OpenAPI docs.
@@ -53,8 +49,9 @@ public class SecurityConfig {
      *
      * <ul>
      *   <li>CSRF disabled — not needed for stateless REST APIs.</li>
-     *   <li>Session management set to {@code STATELESS} — no HTTP session is created;
-     *       every request must carry a valid credential (JWT Bearer or HTTP Basic).</li>
+     *   <li>Session management set to {@code STATELESS} — every request must carry a JWT.</li>
+     *   <li>HTTP Basic disabled — avoids the browser native credential popup on 401.</li>
+     *   <li>Custom entry point returns plain 401 without a {@code WWW-Authenticate} header.</li>
      *   <li>Swagger endpoints ({@code /swagger-ui/**}, {@code /v3/api-docs/**}) are public.</li>
      *   <li>Auth endpoints ({@code /auth/register}, {@code /auth/login}) are public.</li>
      *   <li>All other requests require authentication.</li>
@@ -80,7 +77,13 @@ public class SecurityConfig {
                 ).permitAll()
                 .anyRequest().authenticated()
             )
-            .httpBasic(org.springframework.security.config.Customizer.withDefaults())
+            .httpBasic(basic -> basic.disable())
+            .exceptionHandling(ex -> ex
+                // Return a plain 401 without a WWW-Authenticate header so the browser
+                // does not show its native Basic-auth credential dialog.
+                .authenticationEntryPoint((request, response, authException) ->
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
+            )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -95,14 +98,15 @@ public class SecurityConfig {
      * @return a disabled {@link FilterRegistrationBean}
      */
     /**
-     * Allows cross-origin requests from the Vite dev server ({@code localhost:5173}).
+     * Allows cross-origin requests from the Vite dev server ({@code localhost:5173})
+     * and from the Dockerised nginx frontend ({@code localhost:80}).
      *
      * @return the CORS configuration source
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

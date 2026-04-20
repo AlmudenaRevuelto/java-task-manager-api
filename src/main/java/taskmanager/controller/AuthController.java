@@ -40,6 +40,14 @@ public class AuthController {
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
 
+    /**
+     * Constructs the controller with its required dependencies.
+     *
+     * @param userRepository       repository for persisting and looking up users
+     * @param passwordEncoder      BCrypt encoder used to hash passwords before storage
+     * @param jwtUtils             utility for generating and validating JWT tokens
+     * @param authenticationManager Spring Security manager used to validate credentials on login
+     */
     public AuthController(UserRepository userRepository,
                           PasswordEncoder passwordEncoder,
                           JwtUtils jwtUtils,

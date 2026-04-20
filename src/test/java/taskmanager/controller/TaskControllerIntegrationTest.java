@@ -403,4 +403,77 @@ class TaskControllerIntegrationTest {
                 .with(asOtherUser()))
                 .andExpect(status().isForbidden());
     }
+
+    /**
+     * Verifies that GET /tasks only returns the current user's own tasks.
+     * An admin creates a task; when the regular user calls GET /tasks they should
+     * NOT see the admin's task — and vice versa.
+     *
+     * <p>This test validates the scoping fix in
+     * {@link taskmanager.service.TaskService#getAll}: results are ALWAYS filtered
+     * by the authenticated user, regardless of role.
+     */
+    @Test
+    void shouldOnlyReturnCurrentUsersTasksInList() throws Exception {
+        // Create a task for testuser
+        TaskRequest userTask = new TaskRequest();
+        userTask.setTitle("User's own task");
+        userTask.setCompleted(false);
+        mockMvc.perform(post("/tasks")
+                .with(asTestUser())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userTask)))
+                .andExpect(status().isCreated());
+
+        // Create a task for adminuser
+        TaskRequest adminTask = new TaskRequest();
+        adminTask.setTitle("Admin's own task");
+        adminTask.setCompleted(false);
+        mockMvc.perform(post("/tasks")
+                .with(asAdminUser())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(adminTask)))
+                .andExpect(status().isCreated());
+
+        // testuser should only see their own task
+        mockMvc.perform(get("/tasks").with(asTestUser()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("User's own task"));
+
+        // adminuser should only see their own task (not testuser's)
+        mockMvc.perform(get("/tasks").with(asAdminUser()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Admin's own task"));
+    }
+
+    /**
+     * Verifies that GET /tasks?dueBefore=DATE returns only tasks whose due date
+     * is on or before the given date.
+     */
+    @Test
+    void shouldFilterTasksByDueBefore() throws Exception {
+        TaskRequest before = new TaskRequest();
+        before.setTitle("Due Before Task");
+        before.setCompleted(false);
+        before.setDueDate(LocalDate.of(2026, 3, 1));
+
+        TaskRequest after = new TaskRequest();
+        after.setTitle("Due After Task");
+        after.setCompleted(false);
+        after.setDueDate(LocalDate.of(2026, 12, 31));
+
+        mockMvc.perform(post("/tasks").with(asTestUser())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(before)));
+        mockMvc.perform(post("/tasks").with(asTestUser())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(after)));
+
+        mockMvc.perform(get("/tasks").with(asTestUser()).param("dueBefore", "2026-06-01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Due Before Task"));
+    }
 }

@@ -53,14 +53,18 @@ public class TaskController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(
         summary = "List tasks",
-        description = "Returns a paginated list of tasks. Supports filtering by completion status, priority, due date, and free-text search over title and description."
+        description = "Returns a paginated list of tasks belonging to the authenticated user. Supports filtering by completion status, priority, due date, and free-text search over title and description. Results are always scoped to the current user regardless of role."
     )
-    @ApiResponse(responseCode = "200", description = "Tasks retrieved successfully")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Tasks retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
+        @ApiResponse(responseCode = "403", description = "Insufficient permissions")
+    })
     public Page<TaskResponse> getAll(
-            @Parameter(description = "Filter by completion status") @RequestParam(required = false) Boolean completed,
-            @Parameter(description = "Filter by priority level (LOW, MEDIUM, HIGH)") @RequestParam(required = false) Priority priority,
-            @Parameter(description = "Return tasks due on or before this date (ISO format: yyyy-MM-dd)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueBefore,
-            @Parameter(description = "Free-text search over title and description (case-insensitive)") @RequestParam(required = false) String search,
+            @Parameter(description = "Filter by completion status", example = "false") @RequestParam(required = false) Boolean completed,
+            @Parameter(description = "Filter by priority level", example = "HIGH", schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"LOW", "MEDIUM", "HIGH"})) @RequestParam(required = false) Priority priority,
+            @Parameter(description = "Return tasks due on or before this date (ISO format: yyyy-MM-dd)", example = "2026-12-31") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueBefore,
+            @Parameter(description = "Free-text search over title and description (case-insensitive)", example = "groceries") @RequestParam(required = false) String search,
             @ParameterObject Pageable pageable) {
         return service.getAll(completed, priority, dueBefore, search, pageable);
     }
@@ -73,9 +77,11 @@ public class TaskController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    @Operation(summary = "Get a task by ID", description = "Returns a single task matching the provided ID.")
+    @Operation(summary = "Get a task by ID", description = "Returns a single task matching the provided ID. Returns 404 if the task does not exist or belongs to a different user.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Task found"),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
+        @ApiResponse(responseCode = "403", description = "Task belongs to a different user"),
         @ApiResponse(responseCode = "404", description = "Task not found")
     })
     public TaskResponse getById(@PathVariable Long id) {
@@ -91,10 +97,11 @@ public class TaskController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    @Operation(summary = "Create a new task", description = "Creates a new task. Title is required. Priority defaults to MEDIUM if not provided.")
+    @Operation(summary = "Create a new task", description = "Creates a new task assigned to the authenticated user. Title is required. Priority defaults to MEDIUM if not provided.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Task created successfully"),
-        @ApiResponse(responseCode = "400", description = "Validation error — title is blank or request is malformed")
+        @ApiResponse(responseCode = "400", description = "Validation error — title is blank or request is malformed"),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
     })
     public TaskResponse create(@Valid @RequestBody TaskRequest request) {
         return service.create(request);
@@ -109,10 +116,12 @@ public class TaskController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    @Operation(summary = "Update an existing task by ID", description = "Replaces all fields of an existing task. Title is required.")
+    @Operation(summary = "Update an existing task by ID", description = "Replaces all fields of an existing task. Title is required. Returns 403 if the task belongs to a different user.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Task updated successfully"),
-        @ApiResponse(responseCode = "400", description = "Validation error"),
+        @ApiResponse(responseCode = "400", description = "Validation error — title is blank or request is malformed"),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
+        @ApiResponse(responseCode = "403", description = "Task belongs to a different user"),
         @ApiResponse(responseCode = "404", description = "Task not found")
     })
     public TaskResponse update(@PathVariable Long id, @Valid @RequestBody TaskRequest request) {
@@ -127,9 +136,11 @@ public class TaskController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    @Operation(summary = "Delete a task by ID", description = "Permanently removes the task with the given ID.")
+    @Operation(summary = "Delete a task by ID", description = "Permanently removes the task with the given ID. Returns 403 if the task belongs to a different user.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Task deleted successfully"),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
+        @ApiResponse(responseCode = "403", description = "Task belongs to a different user"),
         @ApiResponse(responseCode = "404", description = "Task not found")
     })
     public void delete(@PathVariable Long id) {

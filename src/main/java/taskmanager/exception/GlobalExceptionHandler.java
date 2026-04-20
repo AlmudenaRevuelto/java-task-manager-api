@@ -2,6 +2,7 @@ package taskmanager.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,16 +54,32 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles {@link AccessDeniedException} thrown when a user tries to access
-     * a resource that belongs to another user.
+     * Handles the custom {@link taskmanager.exception.AccessDeniedException} thrown by
+     * {@link taskmanager.security.SecurityHelper#checkOwnership} when a user tries to
+     * access a resource that belongs to another user.
      * Returns HTTP 403 with the exception message.
      *
      * @param ex the access denied exception
      * @return a {@code 403 Forbidden} response with the error message
      */
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+    @ExceptionHandler(taskmanager.exception.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(taskmanager.exception.AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                    .body(new ErrorResponse(ex.getMessage(), null));
+    }
+
+    /**
+     * Handles Spring Security's {@link AccessDeniedException} thrown by
+     * {@code @PreAuthorize} checks when a user lacks the required role.
+     * This ensures that role-based denials return {@code 403 Forbidden} rather
+     * than leaking as a generic {@code 404} via the {@link RuntimeException} handler.
+     *
+     * @param ex the Spring Security access denied exception
+     * @return a {@code 403 Forbidden} response
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleSpringAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                   .body(new ErrorResponse("Access Denied", null));
     }
 }

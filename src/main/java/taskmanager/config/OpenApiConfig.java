@@ -39,9 +39,14 @@ public class OpenApiConfig {
                 .title("Task Manager API")
                 .version("1.0.0")
                 .description("""
-                    REST API for managing tasks. Supports full CRUD operations. \
-                    Each task has a title, optional description, completion status, \
-                    priority level (LOW, MEDIUM, HIGH) and an optional due date.
+                    REST API for task management with a React + TypeScript frontend.
+
+                    Features:
+                    - Full CRUD for tasks (title, description, priority, due date, completion status).
+                    - JWT Bearer authentication — obtain a token from POST /auth/login.
+                    - Role-based access control: USER and ADMIN.
+                    - Tasks are always scoped to the authenticated user, regardless of role.
+                    - Admin endpoints (/admin/**) allow listing, promoting, and deleting users.
                     """)
                 .contact(new Contact()
                     .name("Almudena")

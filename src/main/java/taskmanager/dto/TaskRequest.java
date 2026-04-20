@@ -19,7 +19,7 @@ public class TaskRequest {
     @Schema(description = "Whether the task is completed", example = "false")
     private boolean completed;
 
-    @Schema(description = "Task priority. Defaults to MEDIUM if not provided", example = "HIGH")
+    @Schema(description = "Task priority. Defaults to MEDIUM if not provided", example = "HIGH", allowableValues = {"LOW", "MEDIUM", "HIGH"})
     private Priority priority;
 
     @Schema(description = "Optional due date in ISO format", example = "2026-12-31")

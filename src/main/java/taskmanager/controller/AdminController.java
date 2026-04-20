@@ -8,13 +8,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import taskmanager.dto.UpdateRoleRequest;
 import taskmanager.dto.UserResponse;
 import taskmanager.repository.TaskRepository;
 import taskmanager.repository.UserRepository;
+import taskmanager.security.SecurityHelper;
 
 import java.util.List;
 
@@ -30,16 +30,20 @@ public class AdminController {
 
     private final UserRepository userRepository;
     private final TaskRepository taskRepository;
+    private final SecurityHelper securityHelper;
 
     /**
      * Constructs the controller with its required repositories.
      *
-     * @param userRepository repository for user CRUD operations
-     * @param taskRepository repository used to cascade-delete a user's tasks before deletion
+     * @param userRepository  repository for user CRUD operations
+     * @param taskRepository  repository used to cascade-delete a user's tasks before deletion
+     * @param securityHelper  helper to retrieve the current authenticated username
      */
-    public AdminController(UserRepository userRepository, TaskRepository taskRepository) {
+    public AdminController(UserRepository userRepository, TaskRepository taskRepository,
+                           SecurityHelper securityHelper) {
         this.userRepository = userRepository;
         this.taskRepository = taskRepository;
+        this.securityHelper = securityHelper;
     }
 
     /**
@@ -91,10 +95,10 @@ public class AdminController {
      * An admin cannot delete their own account.
      *
      * @param id          the user ID to delete
-     * @param currentUser the authenticated admin making the request
      */
     @DeleteMapping("/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     @Operation(summary = "Delete a user", description = "Deletes the user and all their tasks. Admins cannot delete their own account.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "User deleted successfully"),
@@ -102,15 +106,14 @@ public class AdminController {
         @ApiResponse(responseCode = "403", description = "Caller is not an ADMIN"),
         @ApiResponse(responseCode = "404", description = "User not found")
     })
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id,
-                                            @AuthenticationPrincipal UserDetails currentUser) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
-        if (user.getUsername().equals(currentUser.getUsername())) {
+        if (user.getUsername().equals(securityHelper.getCurrentUsername())) {
             return ResponseEntity.badRequest().build();
         }
         taskRepository.deleteByUserId(id);
-        userRepository.delete(user);
+        userRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

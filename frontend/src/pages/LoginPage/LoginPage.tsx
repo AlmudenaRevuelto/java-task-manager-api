@@ -8,12 +8,16 @@
  *  4. The user is redirected to the /tasks page.
  *  5. On failure, an error message is shown inline.
  *
+ * A "Crear cuenta" link opens RegisterModal, which handles POST /auth/register.
+ * On successful registration the user is logged in and redirected automatically.
+ *
  * Styling is provided by LoginPage.css.
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { login as loginApi } from "../../api/authApi";
+import RegisterModal from "../../components/RegisterModal/RegisterModal";
 import "./LoginPage.css";
 
 export default function LoginPage() {
@@ -26,6 +30,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   // Holds an error message when login fails
   const [error, setError] = useState("");
+  // Controls visibility of the registration modal
+  const [showRegister, setShowRegister] = useState(false);
 
   /**
    * Handles form submission:
@@ -38,7 +44,7 @@ export default function LoginPage() {
     setError(""); // Clear any previous error before retrying
     try {
       const data = await loginApi(username, password);
-      login(data.token); // Persist token via AuthContext
+      login({ token: data.token, username: data.username, role: data.role });
       navigate("/tasks"); // Redirect to the protected task list
     } catch {
       setError("Usuario o contraseña incorrectos");
@@ -47,6 +53,17 @@ export default function LoginPage() {
 
   return (
     <div className="login-wrapper">
+      {/* Registration modal — shown when the user clicks "Crear cuenta" */}
+      {showRegister && (
+        <RegisterModal
+          onClose={() => setShowRegister(false)}
+          onRegistered={(data) => {
+            login(data);
+            navigate("/tasks");
+          }}
+        />
+      )}
+
       <div className="login-card">
         <h2>Iniciar sesión</h2>
         <form onSubmit={handleSubmit}>
@@ -79,6 +96,14 @@ export default function LoginPage() {
             Entrar
           </button>
         </form>
+
+        {/* Link to open the registration modal */}
+        <p className="register-prompt">
+          ¿No tienes cuenta?{" "}
+          <button className="register-link" onClick={() => setShowRegister(true)}>
+            Crear cuenta
+          </button>
+        </p>
       </div>
     </div>
   );

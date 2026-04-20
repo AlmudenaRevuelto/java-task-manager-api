@@ -27,11 +27,15 @@ import EditTaskModal from "../../components/EditTaskModal";
 import TaskCard from "../../components/TaskCard";
 import FilterBar from "../../components/FilterBar";
 import Pagination from "../../components/Pagination";
+import UsersModal from "../../components/UsersModal/UsersModal";
 
 export default function TaskPage() {
   const navigate = useNavigate();
   // logout() from AuthContext clears the token from state and localStorage
-  const { logout } = useAuth();
+  const { logout, role, username } = useAuth();
+
+  // Controls visibility of the admin user-management modal (ADMIN only)
+  const [showUsers, setShowUsers] = useState(false);
 
   // Task list fetched from the backend
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -121,6 +125,13 @@ export default function TaskPage() {
   return (
     <div className="container">
 
+      {showUsers && (
+        <UsersModal
+          onClose={() => setShowUsers(false)}
+          currentUsername={username}
+        />
+      )}
+
       {selectedTask && (
         <EditTaskModal
           key={selectedTask.id}
@@ -148,6 +159,11 @@ export default function TaskPage() {
         <h1>Tasks</h1>
 
         <div className="actions">
+          {role === "ADMIN" && (
+            <button className="btn-admin" onClick={() => setShowUsers(true)}>
+              Gestionar usuarios
+            </button>
+          )}
           <button className={showForm ? "btn-cancel" : "btn-new-task"} onClick={() => setShowForm(!showForm)}>
             {showForm ? "✖ Cancelar" : "+ Nueva tarea"}
           </button>

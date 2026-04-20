@@ -75,6 +75,7 @@ public class SecurityConfig {
                     "/auth/register",
                     "/auth/login"
                 ).permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .httpBasic(basic -> basic.disable())

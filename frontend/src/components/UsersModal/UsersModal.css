@@ -1,0 +1,146 @@
+/* UsersModal.css — styles for the admin user management table modal */
+
+.users-modal-content {
+  /* Width is controlled by .modal-wide on the parent */
+}
+
+.users-modal-content h2 {
+  margin: 0 0 18px;
+  color: #1a1a2e;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* Loading / error states */
+.users-modal-status {
+  text-align: center;
+  padding: 24px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Scrollable table container */
+.users-table-wrapper {
+  max-height: 420px;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid #e0e3f0;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.users-table thead {
+  position: sticky;
+  top: 0;
+  background: #f5f6fb;
+}
+
+.users-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 700;
+  color: #444;
+  border-bottom: 2px solid #dde1f0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.users-table td {
+  padding: 10px 14px;
+  color: #1a1a2e;
+  border-bottom: 1px solid #eef0f8;
+}
+
+.users-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.users-table tbody tr:hover {
+  background: #f7f8ff;
+}
+
+/* Role badge */
+.role-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.role-badge.admin {
+  background: #fde8d8;
+  color: #c0520a;
+}
+
+.role-badge.user {
+  background: #e1e8ff;
+  color: #3d5ce0;
+}
+
+/* Role select dropdown */
+.role-select {
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.role-select:focus {
+  outline: none;
+  border-color: #4f6ef7;
+  box-shadow: 0 0 0 2px rgba(79, 110, 247, 0.15);
+}
+
+.role-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* "You" badge shown next to the logged-in user's own row */
+.you-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: #e1e8ff;
+  color: #3d5ce0;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+/* Delete user button */
+.btn-delete-user {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+.btn-delete-user:hover {
+  background: #fde8e8;
+  opacity: 1;
+}
+
+.btn-delete-user:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}

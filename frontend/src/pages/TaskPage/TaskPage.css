@@ -65,6 +65,23 @@
   color: #555;
 }
 
+.btn-admin {
+  padding: 9px 20px;
+  background: transparent;
+  color: #c0520a;
+  border: 2px solid #c0520a;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-admin:hover {
+  background: #c0520a;
+  color: #fff;
+}
+
 .btn-logout {
   padding: 9px 20px;
   background: transparent;

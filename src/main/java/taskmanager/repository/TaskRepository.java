@@ -19,4 +19,12 @@ public interface TaskRepository
      * @return an {@link Optional} containing the task, or empty
      */
     Optional<Task> findByIdAndUserUsername(Long id, String username);
+
+    /**
+     * Deletes all tasks belonging to the user with the given ID.
+     * Used before deleting a user to avoid foreign-key constraint violations.
+     *
+     * @param userId the owner's ID
+     */
+    void deleteByUserId(Long userId);
 }

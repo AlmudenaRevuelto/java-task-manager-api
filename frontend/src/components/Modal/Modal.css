@@ -18,12 +18,19 @@
   border-radius: 12px;
   padding: 24px;
   width: 420px;
-  max-width: 90%;
+  max-width: 90vw;
   color-scheme: only light;
+  overflow: hidden;
 
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
   animation: fadeInScale 0.2s ease;
   position: relative;
+}
+
+/* Wider variant for modals that need more horizontal space (e.g. UsersModal) */
+.modal-wide {
+  width: 640px;
+  max-width: 95vw;
 }
 
 .modal-close {

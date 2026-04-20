@@ -1,0 +1,90 @@
+/* RegisterModal.css — styles for the new-user registration form */
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 300px;
+}
+
+.register-form h2 {
+  margin: 0 0 4px;
+  color: #1a1a2e;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.register-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.register-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.register-field input {
+  padding: 9px 11px;
+  border: 1px solid #ddd;
+  border-radius: 7px;
+  font-size: 14px;
+  color: #1a1a2e;
+  background: #fafafa;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.register-field input:focus {
+  outline: none;
+  border-color: #4f6ef7;
+  box-shadow: 0 0 0 2px rgba(79, 110, 247, 0.15);
+  background: #fff;
+}
+
+.register-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.register-actions .btn-primary {
+  padding: 9px 22px;
+  background: #4f6ef7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(79, 110, 247, 0.3);
+}
+
+.register-actions .btn-primary:hover {
+  background: #3d5ce0;
+}
+
+.register-actions .btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.register-actions .btn-secondary {
+  padding: 9px 22px;
+  background: transparent;
+  color: #666;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.register-actions .btn-secondary:hover {
+  border-color: #999;
+  color: #333;
+}

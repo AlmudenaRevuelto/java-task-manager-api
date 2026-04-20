@@ -66,16 +66,17 @@ public class TaskService {
     }
 
     /**
-     * Returns paginated and filtered tasks.
+     * Returns paginated and filtered tasks belonging to the authenticated user.
      *
-     * <p>Admins see all tasks; regular users see only their own.
+     * <p>Results are always scoped to the current user regardless of their role,
+     * so admins only see their own tasks — not those of other users.
      *
-     * @param completed optional completed filter
-     * @param priority optional priority filter
-     * @param dueBefore optional due date filter
-     * @param search optional free-text search over title and description
-     * @param pageable pagination/sorting info
-     * @return paginated task responses
+     * @param completed  optional filter by completion status
+     * @param priority   optional filter by priority level
+     * @param dueBefore  optional filter for tasks due on or before this date
+     * @param search     optional free-text search over title and description
+     * @param pageable   pagination and sorting parameters
+     * @return paginated task responses for the current user
      */
     public Page<TaskResponse> getAll(
             Boolean completed,
@@ -86,12 +87,8 @@ public class TaskService {
 
         String username = securityHelper.getCurrentUsername();
 
-        Specification<Task> ownerFilter = securityHelper.isAdmin()
-            ? (root, query, cb) -> cb.conjunction()
-            : TaskSpecification.belongsToUser(username);
-
         Specification<Task> spec = Specification
-            .where(ownerFilter)
+            .where(TaskSpecification.belongsToUser(username))
             .and(TaskSpecification.hasCompleted(completed))
             .and(TaskSpecification.hasPriority(priority))
             .and(TaskSpecification.dueBefore(dueBefore))

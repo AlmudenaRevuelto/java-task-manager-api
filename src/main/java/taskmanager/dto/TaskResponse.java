@@ -57,7 +57,7 @@ public class TaskResponse {
     public String getDescription() { return description; }
     public boolean isCompleted() { return completed; }
     public Priority getPriority() { return priority; }
-    public LocalDate getDueDate() { return dueDate; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public String getDueDate() { return dueDate != null ? dueDate.toString() : null; }
+    public String getCreatedAt() { return createdAt != null ? createdAt.toString() : null; }
+    public String getUpdatedAt() { return updatedAt != null ? updatedAt.toString() : null; }
 }

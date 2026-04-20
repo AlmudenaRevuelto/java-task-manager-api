@@ -1,0 +1,120 @@
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.edit-form h2 {
+  margin: 0 0 4px;
+  color: #1a1a2e;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.edit-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.edit-field input,
+.edit-field textarea,
+.edit-field select {
+  padding: 9px 11px;
+  border: 1px solid #ddd;
+  border-radius: 7px;
+  font-size: 14px;
+  color: #1a1a2e;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fafafa;
+  color-scheme: only light;
+}
+
+.edit-field input:focus,
+.edit-field textarea:focus,
+.edit-field select:focus {
+  outline: none;
+  border-color: #4f6ef7;
+  box-shadow: 0 0 0 2px rgba(79, 110, 247, 0.15);
+  background: #fff;
+}
+
+.edit-field textarea {
+  resize: none;
+  min-height: 72px;
+}
+
+.edit-row {
+  display: flex;
+  gap: 12px;
+}
+
+.edit-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+}
+
+.edit-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #4f6ef7;
+  cursor: pointer;
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn-primary {
+  padding: 9px 22px;
+  background: #4f6ef7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(79, 110, 247, 0.3);
+}
+
+.btn-primary:hover {
+  background: #3d5ce0;
+}
+
+.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  padding: 9px 22px;
+  background: transparent;
+  color: #666;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.btn-secondary:hover {
+  border-color: #999;
+  color: #333;
+}

@@ -2,6 +2,10 @@
 
 Full-stack task management application with a Spring Boot REST API backend and a React + TypeScript frontend. Supports full CRUD operations with filtering, pagination, sorting, free-text search, JWT authentication, role-based access control, an admin panel, and Docker deployment.
 
+## Demo
+
+[Watch the demo on YouTube](https://youtu.be/QhkHOAJCav8)
+
 ---
 
 ## Tech Stack
